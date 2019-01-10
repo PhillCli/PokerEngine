@@ -39,3 +39,6 @@
 
 # Build dir
 build/*
+
+# Configured files
+*.cpp

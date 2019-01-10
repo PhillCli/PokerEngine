@@ -1,0 +1,41 @@
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE "PokerEngine"
+
+#include <boost/test/unit_test.hpp>
+#include "libpokerengine/pokerengine.hpp"
+#include "helpers/helpers.hpp"
+
+std::istream& operator >> (std::istream& is, CSVRow& data) {
+  data.readNextRow(is);
+  return is;
+}
+
+BOOST_AUTO_TEST_SUITE(test_noboard_nodead)
+BOOST_AUTO_TEST_CASE(csv_2hands) {
+  std::ifstream file("${EV_DATA}/2hands.csv");
+
+  CSVRow      f_row;
+  EvTestCases tests;
+
+  // loading reference data
+  while(file >> f_row) {
+    auto str_row = f_row.getRow();
+    //std::cout << f_row[0] << " " << f_row[1] << " " << f_row[2] << " " << f_row[3] << std::endl;
+    tests.parseNewRow(str_row);
+  }
+
+  PokerEngine engine = PokerEngine();
+  for (size_t idx = 0; idx < tests.size(); idx++) {
+    auto hand  = tests.getHands(idx);
+    auto ev    = tests.getEv(idx);
+    auto board = tests.getBoard(idx);
+    auto dead  = tests.getDead(idx);
+    auto res   = engine.EV(hand, "", 1e5);
+    for(size_t idx_ev=0; idx_ev < ev.size(); idx_ev++) {
+      BOOST_CHECK_SMALL(ev[idx_ev] - 100*res[idx_ev], 5e-1);
+    }
+  }
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
